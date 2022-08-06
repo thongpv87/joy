@@ -1,0 +1,13 @@
+cradle:
+  cabal:
+    - path: "./"
+      component: "lib:joy"
+
+    - path: "./HelloWorld.hs"
+      component: "joy:exe:Hello"
+
+    - path: "./RS.hs"
+      component: "joy:exe:RS"
+
+    - path: "src/FRP/frp.hs"
+      component: "joy:exe:FRP"
