@@ -4,7 +4,9 @@ import Control.Applicative
 import Data.Functor
 
 type Time = Double
-newtype Behavior a = B (Time -> a)
+newtype Behavior a = B
+    { unB :: Time -> a
+    }
 
 instance Functor Behavior where
     fmap :: (a -> b) -> Behavior a -> Behavior b
@@ -32,20 +34,39 @@ instance Num a => Num (Behavior a) where
     signum = fmap signum
     fromInteger = pure . fromInteger
 
-newtype Event a = E (Behavior [a])
+time :: Behavior Time
+time = B id
+
+-- ========================== Event ========================
+
+newtype Event a = E
+    { unE :: Behavior [a]
+    }
 
 instance Functor Event where
     fmap :: (a -> b) -> Event a -> Event b
-    fmap f (E b) = E $ (fmap . fmap) f b
+    fmap f (E b) = E $ fmap (fmap f) b
 
 instance Semigroup (Event a) where
     E f <> E g =  E (f <> g)
 
+instance Monoid (Event a) where
+    mempty = never
 
-time :: Behavior Time
-time = B id
+never :: Event a
+never = E $ pure []
 
-switcher :: Behavior a -> Event a -> Behavior a
+once :: Time -> a -> Event a
+once ts a = E $ B (\t -> [a | t == ts])
+
+snapshot :: Event a -> Behavior b -> Event (a, b)
+snapshot = undefined
+
+-- predicate :: Behavior Bool -> Event ()
+
+
+
+switcher :: Behavior a -> Event (Behavior a) -> Behavior a
 switcher = undefined
 
 sample :: [Time] -> Behavior a -> [a]
@@ -69,10 +90,17 @@ main :: IO ()
 main = do
     -- print $ sample' [1..10] (evt1)
     print $ sample' [1..10] (fmap (+1) evt1)
-    print $ sample' [1..10] (fmap (+1) evt2)
+    print $ sample' [1..10] (fmap show evt2)
     print $ sample' [1..10] (evt1 <> evt2)
     test1
 
+-- newChannelEvent :: Time -> IO (Event a, EventChannel a)
+-- newChannelEvent t0 =
+--   do ch <- newChan
+--      -- The following entry is in case the event gets queried at time t0.
+--      writeChan ch (t0, Nothing)
+--      contents <- getChanContents ch
+--      return (possOccsE contents, ch)
 
 test1 = do
     print $ sample [1..10] (pure 4 + pure 5)

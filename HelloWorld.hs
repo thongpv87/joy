@@ -1,4 +1,4 @@
-import Data.Functor.Foldable
+import Data.Foldable
 import Data.String
 
 type Unop a = a -> a

@@ -3,7 +3,39 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    name: brick
+    version: '1.1'
+    git: https://github.com/jtdaugherty/brick
+    pantry-tree:
+      size: 7627
+      sha256: a44b479d081f9b3b85fb064e0ca327d2c73dc8de75ff92b8644a9b1835f1a1f7
+    commit: fea7ae22ed05e4de78c303c50b0e675cfe855502
+  original:
+    git: https://github.com/jtdaugherty/brick
+    commit: fea7ae22ed05e4de78c303c50b0e675cfe855502
+- completed:
+    hackage: bimap-0.5.0@sha256:aba506d02a1c93fc2b50dcbe728d2a4d07cca89b7033945418061a0b08576ebd,1889
+    pantry-tree:
+      size: 470
+      sha256: 285f5e86640f4bef3b7a60991defb8dd4b3714f8c294495d1136da182c1315a3
+  original:
+    hackage: bimap-0.5.0@sha256:aba506d02a1c93fc2b50dcbe728d2a4d07cca89b7033945418061a0b08576ebd,1889
+- completed:
+    hackage: text-zipper-0.12@sha256:e96110598fc25e57a99ffcd8e583351af8b325b813aa5e3bd0adc627e3e02b6b,1472
+    pantry-tree:
+      size: 604
+      sha256: 51edf26c8f66b1356c820b183e6442f8245ec2aef450fde4cd56db566347daa0
+  original:
+    hackage: text-zipper-0.12@sha256:e96110598fc25e57a99ffcd8e583351af8b325b813aa5e3bd0adc627e3e02b6b,1472
+- completed:
+    hackage: vty-5.36@sha256:dfbb78ea924ad0ef66cff4bc223918240234508c3de139b34780038dafb5fc53,20859
+    pantry-tree:
+      size: 5394
+      sha256: 6957bb4fcbe41a98dc45784f08ed5b25ee604c1d581d58cd7e81108fc63f6b33
+  original:
+    hackage: vty-5.36@sha256:dfbb78ea924ad0ef66cff4bc223918240234508c3de139b34780038dafb5fc53,20859
 snapshots:
 - completed:
     size: 590100

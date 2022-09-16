@@ -93,3 +93,19 @@ executable FRP
                               , containers
                               , QuickCheck
            default-language:    Haskell2010
+
+executable TUI
+           import:              common-options
+           main-is:             tui.hs
+           hs-source-dirs:      src/FRP
+           build-depends:       random
+                              , brick >= 1.1
+                              , vty
+                              , microlens
+                              , text
+                              , microlens-th
+                              , mtl
+                              , containers
+                              , QuickCheck
+           ghc-options:         -threaded
+           default-language:    Haskell2010

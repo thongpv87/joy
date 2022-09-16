@@ -1,0 +1,57 @@
+#+TITLE: Tap hop
+#+AUTHOR: Pham Thong
+#+EMAIL: thongpv87@gmail.com
+#+DATE: 2022-08-31
+#+DESCRIPTION:
+#+KEYWORDS: category theory, denotational semantics, haskell, mathematics, programming
+#+LANGUAGE: en
+# #+OPTIONS: Tex:t LaTex:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+PROPERTY: header-args :tangle "Main.hs"
+
+#+INCLUDE: init.org
+
+#+CALL: init()
+
+* Tu toan hoc den lap trinh
+** Tap hop
+*** Tap hop trong toan hoc
+**** Khai niem tap hop
+**** Tap hop dem duoc
+*****  Co the gan moi phan tu voi mot so tu nhien
+**** Tap hop khong dem duoc
+**** Set a ~ a -> Bool
+
+#+BEGIN_SRC haskell :session hs
+type Set a = a -> Bool
+#+END_SRC
+***  Operations
+**** contains
+#+BEGIN_SRC haskell :session hs
+contains :: Set a -> a -> Bool
+contains = id
+#+END_SRC
+**** join
+#+BEGIN_SRC haskell :session hs
+join :: Set a -> Set a -> Set a
+join s1 s2 a = contains s1 a && contains s2 a
+#+END_SRC
+**** union
+#+BEGIN_SRC haskell :session hs
+union :: Set a -> Set a -> Set a
+union s1 s2 a = contains s1 a ||  contains s2 a
+#+END_SRC
+**** different
+#+BEGIN_SRC haskell :session hs
+different :: Set a -> Set a -> Set a
+different s1 s2 a = contains s1 a && not (contains s2 a)
+#+END_SRC
+
+
+#+BEGIN_SRC haskell :session hs :session-reset yes
+  s1 a = (a >= 1 && a < 10) || (a>=90 && a <= 100)
+  s2 a = (a >= 7 && a < 15) || (a>=100 && a<110)
+  contains (join s1 s2) 101
+  contains (union s1 s2) 101
+  contains (different s1 s2) 2
+  contains (different s1 s2) 7
+#+END_SRC
