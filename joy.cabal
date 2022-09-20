@@ -104,6 +104,7 @@ executable TUI
                               , microlens
                               , text
                               , microlens-th
+                              , async
                               , mtl
                               , containers
                               , QuickCheck

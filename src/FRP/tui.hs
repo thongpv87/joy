@@ -5,7 +5,7 @@
 import Brick
   ( App (..),
     AttrMap,
-    BrickEvent (VtyEvent),
+    BrickEvent (..),
     EventM,
     Padding (Pad),
     Widget,
@@ -26,7 +26,7 @@ import Brick
     (<+>),
     (<=>),
   )
-import Brick.BChan (newBChan)
+import Brick.BChan (newBChan, writeBChan)
 import Brick.Focus
   ( focusRingCursor,
   )
@@ -46,7 +46,10 @@ import Brick.Forms
 import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Center as C
 import qualified Brick.Widgets.Edit as E
-import Data.Text (Text)
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.Async (async)
+import Control.Monad (forever, void)
+import Data.Text (Text, pack, unpack)
 import Graphics.Vty (text)
 import qualified Graphics.Vty as V
 import Lens.Micro ((%~), (^.))
@@ -92,15 +95,15 @@ drawAppState :: AppState e -> [Widget AppResource]
 drawAppState state =
   [ C.vCenter $
       C.hCenter
-        ( B.border
+        ( B.borderWithLabel
+            (txt "Enter math expresion")
             ( padTop (Pad 1) $
-                hLimit
-                  50
-                  ( txt "Enter expression:"
-                      <=> renderForm (_expressionForm state)
-                  )
+                hLimit 50 $ renderForm (state ^. expressionForm)
             )
-            <=> B.border (padTop (Pad 1) $ hLimit 50 (txt "Expression derivative: " <=> txt (_exprDerivative state)))
+            <=> B.borderWithLabel
+              (txt "Derivative")
+              ( padTop (Pad 1) $ hLimit 50 $ str $ unpack (state ^. exprDerivative)
+              )
         )
   ]
 
@@ -130,6 +133,7 @@ handleCalculatorEvent ev = do
     VtyEvent V.EvResize {} -> return ()
     VtyEvent (V.EvKey V.KEsc []) -> halt
     -- Enter quits only when we aren't in the multi-line editor.
+    AppEvent (UserEvent i) -> void $ zoom exprDerivative $ modify (\v -> v <> pack (show i))
     _ -> do
       v <- zoom expressionForm $ do
         handleFormEvent ev
@@ -148,7 +152,7 @@ main = do
         v <- V.mkVty =<< V.standardIOConfig
         V.setMode (V.outputIface v) V.Mouse True
         return v
-      initMathExpr = MathExpression "x"
+      initMathExpr = MathExpression ""
       initialAppState =
         AppState
           { _expressionForm = mkExpressionForm initMathExpr,
@@ -160,6 +164,9 @@ main = do
   eventChan <- newBChan 10
 
   initialVty <- buildVty
+  void $
+    async $
+      forever $ threadDelay 2000000 <* writeBChan eventChan (UserEvent 1)
   f' <- customMain initialVty buildVty (Just eventChan) calculator initialAppState
   print $ formState $ _expressionForm f'
   pure ()
