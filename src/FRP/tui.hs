@@ -20,6 +20,7 @@ import Brick
     padBottom,
     padTop,
     str,
+    txt,
     vLimit,
     zoom,
     (<+>),
@@ -27,41 +28,32 @@ import Brick
   )
 import Brick.BChan (newBChan)
 import Brick.Focus
-  ( focusGetCurrent,
-    focusRingCursor,
+  ( focusRingCursor,
   )
 import Brick.Forms
   ( Form,
-    allFieldsValid,
-    checkboxField,
-    editPasswordField,
-    editShowableField,
     editTextField,
     focusedFormInputAttr,
     formFocus,
     formState,
     handleFormEvent,
-    invalidFields,
     invalidFormInputAttr,
     newForm,
-    radioField,
     renderForm,
     setFieldValid,
     (@@=),
   )
 import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Center as C
-import Brick.Widgets.Edit (handleEditorEvent)
 import qualified Brick.Widgets.Edit as E
-import Control.Monad.Cont (liftIO)
 import Data.Text (Text)
-import qualified Data.Text as T
+import Graphics.Vty (text)
 import qualified Graphics.Vty as V
-import Lens.Micro ((^.))
+import Lens.Micro ((%~), (^.))
 import Lens.Micro.TH (makeLenses)
 
 newtype MathExpression = MathExpression
-  { _expressionInput :: Text
+  { _exprInput :: Text
   }
   deriving (Show)
 
@@ -74,6 +66,7 @@ data AppResource
 
 data AppState e = AppState
   { _expressionForm :: !(Form MathExpression e AppResource),
+    _exprDerivative :: !Text,
     _variablesBinding :: ![(Text, Text)],
     _value :: !Integer
   }
@@ -94,14 +87,21 @@ calculator =
       appAttrMap = const theMap
     }
 
+-- | render app state into UI
 drawAppState :: AppState e -> [Widget AppResource]
 drawAppState state =
   [ C.vCenter $
-      C.hCenter $
-        B.border $
-          padTop (Pad 1) $
-            hLimit 50 $
-              renderForm (_expressionForm state)
+      C.hCenter
+        ( B.border
+            ( padTop (Pad 1) $
+                hLimit
+                  50
+                  ( txt "Enter expression:"
+                      <=> renderForm (_expressionForm state)
+                  )
+            )
+            <=> B.border (padTop (Pad 1) $ hLimit 50 (txt "Expression derivative: " <=> txt (_exprDerivative state)))
+        )
   ]
 
 theMap :: AttrMap
@@ -119,24 +119,28 @@ mkExpressionForm =
   let label s w =
         padBottom (Pad 1) $
           vLimit 1 (hLimit 15 $ str s <+> fill ' ') <+> w
-   in newForm [label "Enter Expression: " @@= editTextField expressionInput ExpressionInput (Just 1)]
+   in newForm
+        [ editTextField exprInput ExpressionInput (Just 1)
+        ]
 
 handleCalculatorEvent :: BrickEvent AppResource UserEvent -> EventM AppResource (AppState UserEvent) ()
 handleCalculatorEvent ev = do
   f <- zoom expressionForm $ gets formFocus
   case ev of
-    VtyEvent (V.EvResize {}) -> return ()
+    VtyEvent V.EvResize {} -> return ()
     VtyEvent (V.EvKey V.KEsc []) -> halt
     -- Enter quits only when we aren't in the multi-line editor.
-    _ ->
-      do
-        zoom expressionForm $ do
-          handleFormEvent ev
-          -- Example of external validation:
-          -- Require age field to contain a value that is at least 18.
-          st <- gets formState
-          -- modify $ setFieldValid (st ^. age >= 18) AgeField
-          modify $ setFieldValid True ExpressionInput
+    _ -> do
+      v <- zoom expressionForm $ do
+        handleFormEvent ev
+        -- Example of external validation:
+        -- Require age field to contain a value that is at least 18.
+        st <- gets formState
+        -- modify $ setFieldValid (st ^. age >= 18) AgeField
+        modify $ setFieldValid True ExpressionInput
+        pure $ st ^. exprInput
+      zoom exprDerivative $
+        modify $ const v
 
 main :: IO ()
 main = do
@@ -148,6 +152,7 @@ main = do
       initialAppState =
         AppState
           { _expressionForm = mkExpressionForm initMathExpr,
+            _exprDerivative = "1",
             _variablesBinding = [],
             _value = 0
           }

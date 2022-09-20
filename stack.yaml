@@ -1,6 +1,10 @@
 resolver: lts-18.28
 packages:
   - .
+
+ghc-options:
+  '$everything': -haddock
+
 extra-deps:
   #- dear-imgui-2.0.0@sha256:7118dbb4c503fd9a1bd3f80c1bbba434fa4933ea5105e04a22cad470421f4c08,8013
   # - git: https://github.com/haskell-game/dear-imgui.hs
