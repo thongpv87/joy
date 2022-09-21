@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 
 import Brick
   ( App (..),
@@ -26,9 +27,9 @@ import Brick
     (<+>),
     (<=>),
   )
-import Brick.BChan (newBChan, writeBChan)
 import Brick.Focus
-  ( focusRingCursor,
+  ( focusGetCurrent,
+    focusRingCursor,
   )
 import Brick.Forms
   ( Form,
@@ -41,18 +42,15 @@ import Brick.Forms
     newForm,
     renderForm,
     setFieldValid,
-    (@@=),
   )
 import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Center as C
 import qualified Brick.Widgets.Edit as E
-import Control.Concurrent (threadDelay)
-import Control.Concurrent.Async (async)
-import Control.Monad (forever, void)
-import Data.Text (Text, pack, unpack)
-import Graphics.Vty (text)
+import Control.Monad (when)
+import Data.Text (Text, unpack)
+import Graphics.Vty (Event)
 import qualified Graphics.Vty as V
-import Lens.Micro ((%~), (^.))
+import Lens.Micro ((^.))
 import Lens.Micro.TH (makeLenses)
 
 newtype MathExpression = MathExpression
@@ -67,25 +65,33 @@ data AppResource
   | VariableBindings Text
   deriving (Show, Eq, Ord)
 
-data AppState e = AppState
+data AppUI e = AppUI
   { _expressionForm :: !(Form MathExpression e AppResource),
-    _exprDerivative :: !Text,
-    _variablesBinding :: ![(Text, Text)],
-    _value :: !Integer
+    _exprDerivative :: !Text
+  }
+
+makeLenses ''AppUI
+
+data AppEnv = AppEnv
+
+data AppState e = AppState
+  { _appUI :: !(AppUI e),
+    _appEnv :: !AppEnv
   }
 
 makeLenses ''AppState
 
-data UserEvent
-  = UserEvent Integer
+data UserAcion
+  = InputEvent Event
+  | CustomEvent
   deriving (Show, Eq)
 
-calculator :: App (AppState UserEvent) UserEvent AppResource
+calculator :: App (AppState e) e AppResource
 calculator =
   App
     { appDraw = drawAppState,
       appHandleEvent = handleCalculatorEvent,
-      appChooseCursor = focusRingCursor (formFocus . _expressionForm),
+      appChooseCursor = focusRingCursor $ formFocus . (^. appUI . expressionForm),
       appStartEvent = return (),
       appAttrMap = const theMap
     }
@@ -98,11 +104,11 @@ drawAppState state =
         ( B.borderWithLabel
             (txt "Enter math expresion")
             ( padTop (Pad 1) $
-                hLimit 50 $ renderForm (state ^. expressionForm)
+                hLimit 50 $ renderForm (state ^. (appUI . expressionForm))
             )
             <=> B.borderWithLabel
               (txt "Derivative")
-              ( padTop (Pad 1) $ hLimit 50 $ str $ unpack (state ^. exprDerivative)
+              ( padTop (Pad 1) $ hLimit 50 $ str $ unpack (state ^. (appUI . exprDerivative))
               )
         )
   ]
@@ -126,16 +132,13 @@ mkExpressionForm =
         [ editTextField exprInput ExpressionInput (Just 1)
         ]
 
-handleCalculatorEvent :: BrickEvent AppResource UserEvent -> EventM AppResource (AppState UserEvent) ()
-handleCalculatorEvent ev = do
-  f <- zoom expressionForm $ gets formFocus
+handleCalculatorEvent :: BrickEvent AppResource e -> EventM AppResource (AppState e) ()
+handleCalculatorEvent ev =
   case ev of
     VtyEvent V.EvResize {} -> return ()
     VtyEvent (V.EvKey V.KEsc []) -> halt
-    -- Enter quits only when we aren't in the multi-line editor.
-    AppEvent (UserEvent i) -> void $ zoom exprDerivative $ modify (\v -> v <> pack (show i))
     _ -> do
-      v <- zoom expressionForm $ do
+      v <- zoom (appUI . expressionForm) $ do
         handleFormEvent ev
         -- Example of external validation:
         -- Require age field to contain a value that is at least 18.
@@ -143,7 +146,7 @@ handleCalculatorEvent ev = do
         -- modify $ setFieldValid (st ^. age >= 18) AgeField
         modify $ setFieldValid True ExpressionInput
         pure $ st ^. exprInput
-      zoom exprDerivative $
+      zoom (appUI . exprDerivative) $
         modify $ const v
 
 main :: IO ()
@@ -152,21 +155,18 @@ main = do
         v <- V.mkVty =<< V.standardIOConfig
         V.setMode (V.outputIface v) V.Mouse True
         return v
-      initMathExpr = MathExpression ""
+      initialAppUI =
+        AppUI
+          { _expressionForm = mkExpressionForm $ MathExpression "",
+            _exprDerivative = ""
+          }
       initialAppState =
         AppState
-          { _expressionForm = mkExpressionForm initMathExpr,
-            _exprDerivative = "1",
-            _variablesBinding = [],
-            _value = 0
+          { _appUI = initialAppUI,
+            _appEnv = AppEnv
           }
 
-  eventChan <- newBChan 10
-
   initialVty <- buildVty
-  void $
-    async $
-      forever $ threadDelay 2000000 <* writeBChan eventChan (UserEvent 1)
-  f' <- customMain initialVty buildVty (Just eventChan) calculator initialAppState
-  print $ formState $ _expressionForm f'
+  f' <- customMain initialVty buildVty Nothing calculator initialAppState
+  print $ formState $ f' ^. (appUI . expressionForm)
   pure ()
