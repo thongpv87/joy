@@ -25,7 +25,7 @@
                   haskell-language-server = {};
                 };
                 buildInputs = with pkgs;
-                  [ stack protobuf haskellPackages.implicit-hie pkgconfig zlib git haskellPackages.hls-eval-plugin
+                  [ stack protobuf haskellPackages.implicit-hie pkg-config zlib git haskellPackages.hls-eval-plugin
                     #SDL2 xorg.libXi xorg.libXrandr xorg.libXxf86vm xorg.libXcursor xorg.libXinerama xorg.libXext
                   ];
               };
@@ -39,7 +39,7 @@
       flake = pkgs.hsProject.flake {};
     in flake // {
       # Built by `nix build .`
-      defaultPackage = flake.packages."hello-world";
+      defaultPackage = flake.packages."joy:exe:TUI";
     }
     );
 }

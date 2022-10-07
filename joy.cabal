@@ -98,6 +98,7 @@ executable TUI
            import:              common-options
            main-is:             tui.hs
            hs-source-dirs:      src/FRP
+           other-modules:       Expr
            build-depends:       random
                               , brick >= 1.1
                               , vty
@@ -105,6 +106,7 @@ executable TUI
                               , text
                               , microlens-th
                               , async
+                              , recursion-schemes
                               , mtl
                               , containers
                               , QuickCheck
