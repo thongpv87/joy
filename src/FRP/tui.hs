@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 
 import Brick
@@ -47,7 +48,10 @@ import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Center as C
 import qualified Brick.Widgets.Edit as E
 import Control.Monad (when)
+import Data.Fix (Fix (..))
+import Data.Functor.Foldable
 import Data.Text (Text, unpack)
+import Expr
 import Graphics.Vty (Event)
 import qualified Graphics.Vty as V
 import Lens.Micro ((^.))
@@ -151,6 +155,14 @@ handleCalculatorEvent ev =
 
 main :: IO ()
 main = do
+  let expr = expr2
+  print expr
+  print $ ppExprF ((refix expr) :: Fix (ExprF Float))
+  print $ eval 5 (refix expr)
+  print $ ppExprF (ad (refix expr))
+  pure ()
+
+test1 = do
   let buildVty = do
         v <- V.mkVty =<< V.standardIOConfig
         V.setMode (V.outputIface v) V.Mouse True
@@ -170,3 +182,8 @@ main = do
   f' <- customMain initialVty buildVty Nothing calculator initialAppState
   print $ formState $ f' ^. (appUI . expressionForm)
   pure ()
+
+expr1 :: (Num a) => Expr a
+expr1 = Scalar 2 `Prod` (Var `Prod` Var) `Sum` Scalar 1
+
+expr2 = (Call Sin Var `Prod` Call Cos Var) `Sum` Call Log Var `Sum` Call Log (Scalar 5)

@@ -107,7 +107,9 @@ executable TUI
                               , microlens-th
                               , async
                               , recursion-schemes
+                              , data-fix
                               , mtl
+                              , deriving-compat
                               , containers
                               , QuickCheck
            ghc-options:         -threaded

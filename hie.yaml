@@ -14,3 +14,6 @@ cradle:
 
     - path: "src/FRP/tui.hs"
       component: "joy:exe:TUI"
+
+    - path: "src/FRP/Expr.hs"
+      component: "joy:exe:TUI"
