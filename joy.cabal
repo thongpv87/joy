@@ -108,6 +108,21 @@ executable FAlgebra
                               , QuickCheck
            default-language:    Haskell2010
 
+executable Life
+           import:              common-options
+           main-is:             life.hs
+           hs-source-dirs:      src
+           build-depends:       random
+                              , joy
+                              , transformers
+                              , text
+                              , deriving-compat
+                              , data-fix
+                              , recursion-schemes
+                              , containers
+                              , QuickCheck
+           default-language:    Haskell2010
+
 
 
 executable TUI

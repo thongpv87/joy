@@ -15,6 +15,9 @@ cradle:
     - path: "src/falgebra.hs"
       component: "joy:exe:FAlgebra"
 
+    - path: "src/life.hs"
+      component: "joy:exe:Life"
+
     - path: "src/FRP/tui.hs"
       component: "joy:exe:TUI"
 

@@ -9,48 +9,6 @@ import Data.Functor.Foldable.TH
 import Data.List (unfoldr)
 import Text.Show.Deriving (deriveShow1)
 
-data PolyF a f
-  = ZeroF
-  | OneF
-  | AddF a f
-  | MultF a f
-  | NegF a
-  deriving (Functor, Show)
-
-$(deriveShow1 ''PolyF)
-
-data Expr
-  = EZero
-  | EOne
-  | EAdd Expr Expr
-  | EMult Expr Expr
-  | ENeg Expr
-  deriving (Show)
-
-data ExprF a
-  = EZeroF
-  | EOneF
-  | EAddF a a
-  | EMultF a a
-  | ENegF a
-  deriving (Functor, Foldable, Traversable)
-
-type instance Base Expr = ExprF
-
-instance Recursive Expr where
-  project EZero = EZeroF
-  project EOne = EOneF
-  project (EAdd a b) = (EAddF a) b
-  project (EMult a b) = (EMultF a) b
-  project (ENeg a) = ENegF a
-
-instance Corecursive Expr where
-  embed EZeroF = EZero
-  embed EOneF = EOne
-  embed (EAddF a b) = (EAdd a) b
-  embed (EMultF a b) = (EMult a) b
-  embed (ENegF a) = ENeg a
-
 data NatF a
   = NZero
   | NSuccF a
