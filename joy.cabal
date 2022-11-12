@@ -94,6 +94,22 @@ executable FRP
                               , QuickCheck
            default-language:    Haskell2010
 
+executable FAlgebra
+           import:              common-options
+           main-is:             falgebra.hs
+           hs-source-dirs:      src
+           build-depends:       random
+                              , joy
+                              , text
+                              , deriving-compat
+                              , data-fix
+                              , recursion-schemes
+                              , containers
+                              , QuickCheck
+           default-language:    Haskell2010
+
+
+
 executable TUI
            import:              common-options
            main-is:             tui.hs

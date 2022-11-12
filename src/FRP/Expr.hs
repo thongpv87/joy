@@ -95,18 +95,18 @@ simplifyExprF = cata $ \case
   SumF (Fix (ScalarF 0)) b -> b
   SumF a (Fix (ScalarF 0)) -> a
   ProdF (Fix (ScalarF a)) (Fix (ScalarF b)) -> scalar (a * b)
-  ProdF (Fix (ScalarF 0)) b -> scalar 0
-  ProdF a (Fix (ScalarF 0)) -> scalar 0
+  ProdF (Fix (ScalarF 0)) _ -> scalar 0
+  ProdF _ (Fix (ScalarF 0)) -> scalar 0
   ProdF (Fix (ScalarF 1)) b -> b
   ProdF a (Fix (ScalarF 1)) -> a
   x -> Fix x
 
 ppExprF :: (Show a, Num a, Eq a) => Fix (ExprF a) -> String
-ppExprF expr = flip cata ({-simplifyExprF-} expr) $ \case
+ppExprF expr = flip cata (simplifyExprF expr) $ \case
   VarF -> "x"
   ScalarF a -> show a
   NegateF e -> "-(" <> e <> ")"
-  InvertF e -> show 1 <> "/(" <> e <> ")"
+  InvertF e -> "1/(" <> e <> ")"
   SumF a b -> "(" <> a <> " + " <> b <> ")"
   ProdF a b -> "(" <> a <> " * " <> b <> ")"
   CallF op e -> show op <> "(" <> e <> ")"
@@ -114,7 +114,7 @@ ppExprF expr = flip cata ({-simplifyExprF-} expr) $ \case
 ad :: (Floating a) => Fix (ExprF a) -> Fix (ExprF a)
 ad = para $ \case
   VarF -> scalar 1
-  ScalarF a -> scalar 0
+  ScalarF _ -> scalar 0
   NegateF (_, x') -> neg x'
   SumF (_, x') (_, y') -> add x' y'
   ProdF (x, x') (y, y') -> mult x y' `add` mult y x'

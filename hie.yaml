@@ -12,6 +12,9 @@ cradle:
     - path: "src/FRP/frp.hs"
       component: "joy:exe:FRP"
 
+    - path: "src/falgebra.hs"
+      component: "joy:exe:FAlgebra"
+
     - path: "src/FRP/tui.hs"
       component: "joy:exe:TUI"
 
