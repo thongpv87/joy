@@ -115,6 +115,7 @@ executable Life
            build-depends:       random
                               , joy
                               , transformers
+                              , profunctors
                               , text
                               , deriving-compat
                               , data-fix

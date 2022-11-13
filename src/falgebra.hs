@@ -77,6 +77,10 @@ evalMultiVarPoly vars =
 
 exampleMultPoly = toListF [(1, [2, 1, 0]), (-3, [0, 3, 1])]
 
+fibInf = Data.Fix.ana (\(a, b) -> (a + b, (b, a + b))) (1, 1)
+
+fixPairToList = cata (\(a, b) -> a : b)
+
 main :: IO ()
 main = do
   print $ ("primes: ", take 10 . drop 10000 . streamToList $ primes)
@@ -84,6 +88,7 @@ main = do
   print $ ("evalMultiVarPoly: ", evalMultiVarPoly [3, 4, 5] exampleMultPoly)
   print $ ("primes2: ", take 10 primes2)
   print $ ("squares: ", take 10 . streamToList $ squares)
+  print $ ("fibo pairs: ", fixPairToList fibInf !! 100)
 
 testFib = do
   let x = 10000
