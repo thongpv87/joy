@@ -9,6 +9,7 @@ import Control.Concurrent (threadDelay)
 import Control.Monad (forM)
 import Data.MemoTrie
 import Data.Set
+import Data.Tuple (swap)
 import System.Console.ANSI (clearScreen)
 
 class Functor w => Comonad w where
@@ -37,7 +38,7 @@ data Status
 
 instance Show Status where
   show Dead = "."
-  show Alive = "X"
+  show Alive = "O"
 
 type Cell = (Integer, Integer)
 
@@ -82,9 +83,61 @@ showAround n (Store f (x, y)) = unlines (show . fmap f <$> neighborsAround)
     neighborsAround = [fmap (,y') [x - n .. x + n] | y' <- [y + n, y + n -1 .. y - n]]
 
 main = do
-  forM (life board1) $ \board -> do
-    putStrLn $ showAround 20 board
+  forM (Prelude.take 100000 $ life board2) $ \board -> do
+    putStrLn $ showAround 30 board
     threadDelay 500000
     clearScreen
 
 board1 = mkBoard [(0, 0), (2, 2), (1, 1), (0, 1), (-1, 1), (1, -2), (2, 1), (-1, -1)]
+
+board2 =
+  mkBoard
+    . (fmap swap)
+    $ [ (5, -5),
+        (5, -4),
+        (5, -3),
+        (5, -2),
+        (5, -1),
+        (5, 0),
+        (5, 4),
+        (4, -4),
+        (4, 0),
+        (4, 3),
+        (4, 4),
+        (3, -3),
+        (3, 2),
+        (3, 4),
+        (2, -2),
+        (2, 1),
+        (2, 2),
+        (2, 4),
+        (1, -5),
+        (1, -4),
+        (1, -1),
+        (1, 0),
+        (1, 4),
+        (0, -5),
+        (0, -1),
+        (0, 0),
+        (0, 3),
+        (0, 4),
+        (-1, -5),
+        (-1, -3),
+        (-1, -2),
+        (-1, 1),
+        (-2, -5),
+        (-2, -3),
+        (-2, 1),
+        (-2, 2),
+        (-3, -5),
+        (-3, -4),
+        (-3, -1),
+        (-3, 3),
+        (-4, -5),
+        (-4, -1),
+        (-4, 0),
+        (-4, 1),
+        (-4, 2),
+        (-4, 3),
+        (-4, 4)
+      ]
