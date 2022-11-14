@@ -91,11 +91,13 @@ nextStatus board = case length . Prelude.filter (== Alive) $ neighbors of
   where
     (status, neighbors) = extract board
 
+life = iterate (extend next)
+
+f = around 6 <$> life board1
+
 main = do
   putStrLn $ unlines $ show <$> around 4 board1
-  iterateM 10 board1 $ \board -> do
-    putStrLn $ unlines $ show <$> around 6 board
-    pure $ extend next board
+  mapM putStrLn $ unlines <$> (fmap show <$> (around 6 <$> life board1))
 
 board1 = mkBoard [(0, 0), (2, 2), (1, 1), (0, 1), (-1, 1), (1, -2), (2, 1), (-1, -1)]
 
