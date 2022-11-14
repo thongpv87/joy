@@ -116,6 +116,7 @@ executable Life
                               , joy
                               , transformers
                               , profunctors
+                              , MemoTrie
                               , text
                               , deriving-compat
                               , data-fix

@@ -1,7 +1,11 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TupleSections #-}
 
 module Main where
 
+import Data.MemoTrie
 import Data.Set
 
 class Functor w => Comonad w where
@@ -12,23 +16,23 @@ class Functor w => Comonad w where
   extend f = fmap f . duplicate
 
 data Store s a = Store (s -> a) s
-  deriving (Functor)
 
-instance (Show a) => Show (Store s a) where
+instance HasTrie s => Functor (Store s) where
+  fmap f (Store g s) = Store (memo $ f . g) s
+
+instance (Show a, HasTrie s) => Show (Store s a) where
   show = show . extract
 
-instance Comonad (Store s) where
+instance HasTrie s => Comonad (Store s) where
   extract (Store f s) = f s
-  duplicate :: Store s a -> Store s (Store s a)
   duplicate (Store f s) = Store (Store f) s
 
 newtype Grid s a = Grid (Store s (Store s a))
   deriving (Functor)
   deriving newtype (Show)
 
-instance (Enum s) => Comonad (Grid s) where
+instance (Enum s, HasTrie s) => Comonad (Grid s) where
   extract (Grid (Store f s)) = let Store f' _ = f s in f' s
-  duplicate :: Grid s a -> Grid s (Grid s a)
   duplicate (Grid (Store fa a)) = Grid $ Store f a
     where
       f = Store (Grid . Store fa)
@@ -71,9 +75,6 @@ around n b@(Store f s) =
   let coords x y = [fmap (,y') [x - n .. x + n] | y' <- [y + n, y + n -1 .. y - n]]
    in (fmap . fmap) f (coords 0 0)
 
-nb :: Board Status -> (Status, [Status])
-nb board = (extract board, extract . ($board) <$> [u, d, l, r, u . l, u . r, d . l, d . r])
-
 next :: Board Status -> Status
 next board
   | livingNeighbors < 2 = Dead
@@ -92,8 +93,6 @@ nextStatus board = case length . Prelude.filter (== Alive) $ neighbors of
     (status, neighbors) = extract board
 
 life = iterate (extend next)
-
-f = around 6 <$> life board1
 
 main = do
   putStrLn $ unlines $ show <$> around 4 board1
