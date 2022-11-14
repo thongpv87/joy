@@ -117,6 +117,7 @@ executable Life
                               , transformers
                               , profunctors
                               , MemoTrie
+                              , ansi-terminal
                               , text
                               , deriving-compat
                               , data-fix

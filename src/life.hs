@@ -5,8 +5,11 @@
 
 module Main where
 
+import Control.Concurrent (threadDelay)
+import Control.Monad (forM)
 import Data.MemoTrie
 import Data.Set
+import System.Console.ANSI (clearScreen)
 
 class Functor w => Comonad w where
   extract :: w a -> a
@@ -27,23 +30,13 @@ instance HasTrie s => Comonad (Store s) where
   extract (Store f s) = f s
   duplicate (Store f s) = Store (Store f) s
 
-newtype Grid s a = Grid (Store s (Store s a))
-  deriving (Functor)
-  deriving newtype (Show)
-
-instance (Enum s, HasTrie s) => Comonad (Grid s) where
-  extract (Grid (Store f s)) = let Store f' _ = f s in f' s
-  duplicate (Grid (Store fa a)) = Grid $ Store f a
-    where
-      f = Store (Grid . Store fa)
-
 data Status
   = Dead
   | Alive
   deriving (Eq)
 
 instance Show Status where
-  show Dead = "-"
+  show Dead = "."
   show Alive = "X"
 
 type Cell = (Integer, Integer)
@@ -64,58 +57,34 @@ mkBoard livings = Store f (0, 0)
     livingCells = fromList livings
 
 -- moving focus around the board
-u, d, l, r :: Board a -> Board a
-u (Store f s) = Store (\(x, y) -> f (x, y + 1)) s
-d (Store f s) = Store (\(x, y) -> f (x, y - 1)) s
-l (Store f s) = Store (\(x, y) -> f (x - 1, y)) s
-r (Store f s) = Store (\(x, y) -> f (x + 1, y)) s
-
-around :: Integer -> Board a -> [[a]]
-around n b@(Store f s) =
-  let coords x y = [fmap (,y') [x - n .. x + n] | y' <- [y + n, y + n -1 .. y - n]]
-   in (fmap . fmap) f (coords 0 0)
+move :: Board a -> (Integer, Integer) -> Board a
+move (Store f (x, y)) (dx, dy) = Store f (x + dx, y + dy)
 
 next :: Board Status -> Status
-next board
-  | livingNeighbors < 2 = Dead
-  | livingNeighbors == 2 = extract board
-  | livingNeighbors == 3 = Alive
-  | otherwise = Dead
+next board =
+  case livingNeighbors of
+    2 -> extract board
+    3 -> Alive
+    _ -> Dead
   where
-    livingNeighbors = length . Prelude.filter (== Alive) $ extract . ($board) <$> [u, d, l, r, u . l, u . r, d . l, d . r]
-
-nextStatus :: Board (Status, [Status]) -> Status
-nextStatus board = case length . Prelude.filter (== Alive) $ neighbors of
-  2 -> status
-  3 -> Alive
-  _ -> Dead
-  where
-    (status, neighbors) = extract board
+    livingNeighbors = length . Prelude.filter (== Alive) $ extract . move board <$> neightbors
+    neightbors = [(x, y) | x <- [-1 .. 1], y <- [-1 .. 1], (x, y) /= (0, 0)]
 
 life = iterate (extend next)
 
+around n (Store f (x, y)) =
+  let coords = [(x', y') | y' <- [y + n, y + n - 1 .. y - n], x' <- [x - n .. x + n]]
+   in fmap f coords
+
+showAround :: (Show a) => Integer -> Board a -> String
+showAround n (Store f (x, y)) = unlines (show . fmap f <$> neighborsAround)
+  where
+    neighborsAround = [fmap (,y') [x - n .. x + n] | y' <- [y + n, y + n -1 .. y - n]]
+
 main = do
-  putStrLn $ unlines $ show <$> around 4 board1
-  mapM putStrLn $ unlines <$> (fmap show <$> (around 6 <$> life board1))
+  forM (life board1) $ \board -> do
+    putStrLn $ showAround 20 board
+    threadDelay 500000
+    clearScreen
 
 board1 = mkBoard [(0, 0), (2, 2), (1, 1), (0, 1), (-1, 1), (1, -2), (2, 1), (-1, -1)]
-
-testNewBoardNav = do
-  putStrLn "Board1"
-  putStrLn $ unlines (show <$> around 4 board1)
-  print (extract board1)
-  putStrLn "Up"
-  putStrLn $ unlines (show <$> around 4 (u board1))
-  print (extract $ u board1)
-  putStrLn "Left"
-  putStrLn $ unlines (show <$> around 4 (l board1))
-  print (extract $ l board1)
-  putStrLn "Down"
-  putStrLn $ unlines (show <$> around 4 (d board1))
-  print (extract $ d board1)
-  putStrLn "Down Left"
-  putStrLn $ unlines (show <$> around 4 (d . l $ board1))
-  print (extract $ d . l $ board1)
-  putStrLn "Down Right"
-  putStrLn $ unlines (show <$> around 4 (d . r $ board1))
-  print (extract $ d . r $ board1)
