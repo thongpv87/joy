@@ -18,6 +18,12 @@ cradle:
     - path: "src/life.hs"
       component: "joy:exe:Life"
 
+    - path: "src/afterlife.hs"
+      component: "joy:exe:Afterlife"
+
+    - path: "src/calendar.hs"
+      component: "joy:exe:Calendar"
+
     - path: "src/FRP/tui.hs"
       component: "joy:exe:TUI"
 

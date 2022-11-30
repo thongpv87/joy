@@ -126,6 +126,43 @@ executable Life
                               , QuickCheck
            default-language:    Haskell2010
 
+executable Afterlife
+           import:              common-options
+           main-is:             afterlife.hs
+           hs-source-dirs:      src
+           build-depends:       random
+                              , joy
+                              , mtl
+                              , transformers
+                              , profunctors
+                              , MemoTrie
+                              , ansi-terminal
+                              , text
+                              , deriving-compat
+                              , data-fix
+                              , recursion-schemes
+                              , containers
+                              , QuickCheck
+           default-language:    Haskell2010
+
+executable Calendar
+           import:              common-options
+           main-is:             calendar.hs
+           hs-source-dirs:      src
+           build-depends:       random
+                              , joy
+                              , time
+                              , transformers
+                              , profunctors
+                              , ansi-terminal
+                              , text
+                              , deriving-compat
+                              , data-fix
+                              , recursion-schemes
+                              , containers
+                              , QuickCheck
+           default-language:    Haskell2010
+
 
 
 executable TUI

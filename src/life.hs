@@ -22,7 +22,8 @@ class Functor w => Comonad w where
 data Store s a = Store (s -> a) s
 
 instance HasTrie s => Functor (Store s) where
-  fmap f (Store g s) = Store (memo $ f . g) s
+  fmap f (Store g s) = Store (f . g) s
+  {-# INLINE fmap #-}
 
 instance (Show a, HasTrie s) => Show (Store s a) where
   show = show . extract
@@ -85,7 +86,7 @@ showAround n (Store f (x, y)) = unlines (show . fmap f <$> neighborsAround)
 main = do
   forM (Prelude.take 100000 $ life board2) $ \board -> do
     putStrLn $ showAround 30 board
-    threadDelay 500000
+    threadDelay 500
     clearScreen
 
 board1 = mkBoard [(0, 0), (2, 2), (1, 1), (0, 1), (-1, 1), (1, -2), (2, 1), (-1, -1)]
