@@ -71,11 +71,12 @@ stdYearLayout _ =
     , [Oct, Nov, Dec]
     ]
 
--- stdMonthLayout :: Year -> Month -> Layout (DayOfMonth, DayOfWeek)
+stdMonthLayout :: Year -> Month -> Layout (DayOfMonth, DayOfWeek)
 stdMonthLayout year month =
   Vert . padFirstLine . fmap Horiz $ grid
  where
   padFirstLine (x : xs) = padL "--*-" 7 x : xs
+  padFirstLine [] = []
   grid = fmap simpleL <$> weekInMonth (dayInMonth year month)
 
 showMonth :: (Show a, PrintfArg a) => Layout a -> [String]
@@ -83,13 +84,11 @@ showMonth (Padding p) = [p]
 showMonth (Txt str) = [str]
 showMonth (Simple a) = [printf "%3d " a]
 showMonth (Horiz ls) =
-  foldr1 (\xs ys -> zipWith (<>) xs ys) xss
- where
-  xss = fmap showMonth ls
-showMonth (Vert ls) = concat $ fmap showMonth ls
+  foldr1 (zipWith (<>)) $ fmap showMonth ls
+showMonth (Vert ls) = concatMap showMonth ls
 
 main = do
-  putStrLn $ unlines $ showMonth $ fmap fromEnum $ stdYearLayout 2022
+  putStrLn $ unlines $ showMonth $ fromEnum <$> stdYearLayout 2022
   putStrLn . unlines . showMonth $ do
     -- print $ do
     month <- stdYearLayout 2022
