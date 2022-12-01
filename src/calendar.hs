@@ -1,13 +1,13 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Main where
 
--- import Data.Time.Calendar
-
-import Control.Applicative
 import Control.Monad
+import Data.List (genericLength, genericReplicate, intersperse)
 import Data.Maybe (fromMaybe)
+import Text.Printf
 
 class Functor w => Comonad w where
   extract :: w a -> a
@@ -16,53 +16,99 @@ class Functor w => Comonad w where
   extend :: (w a -> b) -> w a -> w b
   extend f = fmap f . duplicate
 
-data Doc a
-  = Single a
-  | HorzComp (Doc a) (Doc a)
-  | VertComp (Doc a) (Doc a)
+data Layout a
+  = Simple a
+  | Padding String
+  | Txt String
+  | Horiz [Layout a]
+  | Vert [Layout a]
   deriving (Functor, Show)
 
-instance Applicative Doc where
-  pure = Single
-  Single f <*> a = fmap f a
-  HorzComp d1 d2 <*> a = HorzComp (d1 <*> a) (d2 <*> a)
-  VertComp d1 d2 <*> a = VertComp (d1 <*> a) (d2 <*> a)
+instance Applicative Layout where
+  pure = Simple
+  (<*>) :: Layout (a -> b) -> Layout a -> Layout b
+  Simple f <*> a = fmap f a
+  Padding p <*> _ = Padding p
+  Txt s <*> _ = Txt s
+  Horiz fs <*> a = Horiz (fmap (<*> a) fs)
+  Vert fs <*> a = Vert (fmap (<*> a) fs)
 
-instance Monad Doc where
-  (>>=) :: Doc a -> (a -> Doc b) -> Doc b
-  Single a >>= f = f a
-  HorzComp d1 d2 >>= f = HorzComp (d1 >>= f) (d2 >>= f)
-  VertComp d1 d2 >>= f = VertComp (d1 >>= f) (d2 >>= f)
+instance Monad Layout where
+  (>>=) :: Layout a -> (a -> Layout b) -> Layout b
+  Simple a >>= f = f a
+  Padding p >>= _ = Padding p
+  Txt s >>= _ = Txt s
+  Horiz ls >>= f = Horiz (fmap (>>= f) ls)
+  Vert ls >>= f = Vert (fmap (>>= f) ls)
+
+simpleL = Simple
+horizSimpleL = Horiz . fmap simpleL
+gridSimpleL = Vert . fmap horizSimpleL
+
+sepBy :: String -> Layout a -> Layout a
+sepBy str (Horiz xs) = Horiz $ intersperse (Padding str) xs
+sepBy str (Vert xs) = Vert $ intersperse (Padding str) xs
+sepBy _ l = l
+
+padL :: (Integral n) => String -> n -> Layout a -> Layout a
+padL str n l@(Horiz xs)
+  | n <= len = l
+  | otherwise = Horiz $ genericReplicate (n - len) (Padding str) <> xs
+ where
+  len = genericLength xs
+
+monthInYear :: Monad m => Year -> m [Month]
+monthInYear _ = pure [minBound .. maxBound]
+
+-- stdYearLayout :: Year -> Layout Month
+stdYearLayout _ =
+  gridSimpleL monthGrid
+ where
+  monthGrid =
+    [ [Jan, Feb, Mar]
+    , [Apr, May, Jun]
+    , [Jul, Aug, Sep]
+    , [Oct, Nov, Dec]
+    ]
+
+-- stdMonthLayout :: Year -> Month -> Layout (DayOfMonth, DayOfWeek)
+stdMonthLayout year month =
+  Vert . padFirstLine . fmap Horiz $ grid
+ where
+  padFirstLine (x : xs) = padL "--*-" 7 x : xs
+  grid = fmap simpleL <$> weekInMonth (dayInMonth year month)
+
+showMonth :: (Show a, PrintfArg a) => Layout a -> [String]
+showMonth (Padding p) = [p]
+showMonth (Txt str) = [str]
+showMonth (Simple a) = [printf "%3d " a]
+showMonth (Horiz ls) =
+  foldr1 (\xs ys -> zipWith (<>) xs ys) xss
+ where
+  xss = fmap showMonth ls
+showMonth (Vert ls) = concat $ fmap showMonth ls
+
+main = do
+  putStrLn $ unlines $ showMonth $ fmap fromEnum $ stdYearLayout 2022
+  putStrLn . unlines . showMonth $ do
+    -- print $ do
+    month <- stdYearLayout 2022
+    -- stdMonthLayout 2022 month
+    -- month <- pure Jan
+    fmap fst $ stdMonthLayout 2022 month
+  putStrLn "Hello world"
 
 type Year = Integer
 
-data Month
-  = Jan
-  | Feb
-  | Mar
-  | Apr
-  | May
-  | Jun
-  | Jul
-  | Aug
-  | Sep
-  | Oct
-  | Nov
-  | Dec
+data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec
   deriving (Show, Eq, Enum, Bounded)
 
-data DayOfWeek
-  = Sun
-  | Mon
-  | Tue
-  | Wed
-  | Thu
-  | Fri
-  | Sat
+data DayOfWeek = Sun | Mon | Tue | Wed | Thu | Fri | Sat
   deriving (Show, Eq, Enum, Bounded)
 
 type DayOfMonth = Integer
 
+isLeapYear :: Integral a => a -> Bool
 isLeapYear year
   | year `mod` 4 /= 0 || year `mod` 100 == 0 = False
   | otherwise = True
@@ -93,39 +139,22 @@ dayOfWeek yyyy mm dd = [minBound .. maxBound] !! fromInteger x7
   -- month's key value table
   keyValue = fromMaybe 0 $ lookup mm $ zip [minBound :: Month .. maxBound] [1, 4, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6]
 
-mkYear :: Monad m => Integer -> m Year
-mkYear = pure
-
-monthsInYear :: Monad m => Year -> m [Month]
-monthsInYear _ = pure [minBound .. maxBound]
-
-daysInMonth :: (Monad m, Integral Year) => Year -> Month -> m [(DayOfMonth, DayOfWeek)]
-daysInMonth year month
-  | month `elem` [Jan, Mar, May, Jul, Aug, Oct, Dec] = pure $ dom 31
-  | month `elem` [Apr, Jun, Sep, Nov] = pure $ dom 30
-  -- Feb in normal year
-  | isLeapYear year = pure $ dom 28
+dayInMonth :: Year -> Month -> [(DayOfMonth, DayOfWeek)]
+dayInMonth year month
+  | month `elem` [Jan, Mar, May, Jul, Aug, Oct, Dec] = dom 31
+  | month `elem` [Apr, Jun, Sep, Nov] = dom 30
   -- Feb in leap year
-  | otherwise = pure $ dom 29
+  | isLeapYear year = dom 28
+  -- Feb in normal year
+  | otherwise = dom 29
  where
   firstDow = dayOfWeek year month 1
   dow = dropWhile (/= firstDow) $ concat $ repeat [minBound .. maxBound]
   dom n = zip [1 .. n] dow
 
--- dddd :: Monad m => Month -> m Day
-
-doc :: Doc Integer
-doc = HorzComp (Single 5) (Single 100)
-docf :: Doc (Integer -> Integer)
-docf = VertComp (Single (+ 1)) (Single (+ 2))
-
-main = do
-  print $ docf <*> doc
-  print $ doc >>= pure (fmap ($ 1) docf)
-  print $ dayOfWeek 2022 Dec 12
-  print $ dayOfWeek 1889 Jul 7
-  print $ do
-    year <- mkYear @Doc 2022
-    months <- monthsInYear year
-    daysInMonth year Dec
-  putStrLn "Hello world"
+-- | separate list of day in months into weeks
+weekInMonth :: [(DayOfMonth, DayOfWeek)] -> [[(DayOfMonth, DayOfWeek)]]
+weekInMonth [] = []
+weekInMonth (d : ds) =
+  let (w, ws) = break ((== Sun) . snd) ds
+   in (d : w) : weekInMonth ws
