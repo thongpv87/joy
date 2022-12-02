@@ -56,13 +56,31 @@ padL str n l@(Horiz xs)
   | otherwise = Horiz $ genericReplicate (n - len) (Padding str) <> xs
  where
   len = genericLength xs
+padL _ _ l = l
+
+padR :: (Integral n) => String -> n -> Layout a -> Layout a
+padR str n l@(Horiz xs)
+  | n <= len = l
+  | otherwise = Horiz $ xs <> genericReplicate (n - len) (Padding str)
+ where
+  len = genericLength xs
+padR _ _ l = l
+
+padB :: (Integral n) => String -> n -> Layout a -> Layout a
+padB str n l@(Vert xs)
+  | n <= len = l
+  | otherwise = Vert $ xs <> genericReplicate (n - len) (Padding str)
+ where
+  len = genericLength xs
+padB _ _ l = l
 
 monthInYear :: Monad m => Year -> m [Month]
 monthInYear _ = pure [minBound .. maxBound]
 
 -- stdYearLayout :: Year -> Layout Month
 stdYearLayout _ =
-  gridSimpleL monthGrid
+  --gridSimpleL monthGrid
+  Vert . fmap (Horiz . fmap simpleL) $ monthGrid
  where
   monthGrid =
     [ [Jan, Feb, Mar]
@@ -73,10 +91,10 @@ stdYearLayout _ =
 
 stdMonthLayout :: Year -> Month -> Layout (DayOfMonth, DayOfWeek)
 stdMonthLayout year month =
-  Vert . padFirstLine . fmap Horiz $ grid
+  padB "   " 7 . Vert . padWeek . fmap Horiz $ grid
  where
-  padFirstLine (x : xs) = padL "--*-" 7 x : xs
-  padFirstLine [] = []
+  padWeek (x : xs) = (padL "--*-" 7 x : init xs) <> [padR "    " 7 (last xs)]
+  padWeek [] = []
   grid = fmap simpleL <$> weekInMonth (dayInMonth year month)
 
 showMonth :: (Show a, PrintfArg a) => Layout a -> [String]
