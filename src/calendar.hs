@@ -7,6 +7,7 @@ module Main where
 import Control.Monad
 import Data.List (genericLength, genericReplicate, intersperse)
 import Data.Maybe (fromMaybe)
+import Debug.Trace (traceShow)
 import Text.Printf
 
 class Functor w => Comonad w where
@@ -16,6 +17,8 @@ class Functor w => Comonad w where
   extend :: (w a -> b) -> w a -> w b
   extend f = fmap f . duplicate
 
+
+-- TODO: add sized box layout
 data Layout a
   = Simple a
   | Padding String
@@ -77,10 +80,10 @@ padB _ _ l = l
 monthInYear :: Monad m => Year -> m [Month]
 monthInYear _ = pure [minBound .. maxBound]
 
--- stdYearLayout :: Year -> Layout Month
+stdYearLayout :: Year -> Layout Month
 stdYearLayout _ =
-  --gridSimpleL monthGrid
-  Vert . fmap (Horiz . fmap simpleL) $ monthGrid
+  sepBy (take 85 $ repeat '-')
+  . Vert . fmap (sepBy "|" . Horiz . fmap simpleL) $ monthGrid
  where
   monthGrid =
     [ [Jan, Feb, Mar]
@@ -91,29 +94,33 @@ stdYearLayout _ =
 
 stdMonthLayout :: Year -> Month -> Layout (DayOfMonth, DayOfWeek)
 stdMonthLayout year month =
-  padB "   " 7 . Vert . padWeek . fmap Horiz $ grid
+  padB "    " 7 . Vert . (dowsLabel :) . padWeek . fmap Horiz $ grid
  where
-  padWeek (x : xs) = (padL "--*-" 7 x : init xs) <> [padR "    " 7 (last xs)]
+  padWeek (x : xs) = (padL "    " 7 x : init xs) <> [padR "    " 7 (last xs)]
   padWeek [] = []
   grid = fmap simpleL <$> weekInMonth (dayInMonth year month)
+  dowsLabel = Txt "Sun Mon Tue Wed Thu Fri Sat " 
 
-showMonth :: (Show a, PrintfArg a) => Layout a -> [String]
+
 showMonth (Padding p) = [p]
 showMonth (Txt str) = [str]
 showMonth (Simple a) = [printf "%3d " a]
-showMonth (Horiz ls) =
-  foldr1 (zipWith (<>)) $ fmap showMonth ls
+showMonth (Horiz (p@(Padding _) : ls)) =
+  zipWith (<>) (concat $ repeat $ showMonth p) (showMonth (Horiz ls))
+showMonth (Horiz (l : ls)) =
+  zipWith (<>) (showMonth l) (showMonth (Horiz ls))
+showMonth (Horiz []) = repeat []
+-- TODO: better vertical padding algorithm
 showMonth (Vert ls) = concatMap showMonth ls
 
 main = do
-  putStrLn $ unlines $ showMonth $ fromEnum <$> stdYearLayout 2022
+  -- putStrLn $ unlines $ showMonth $ fromEnum <$> stdYearLayout 2022
   putStrLn . unlines . showMonth $ do
     -- print $ do
     month <- stdYearLayout 2022
     -- stdMonthLayout 2022 month
     -- month <- pure Jan
     fmap fst $ stdMonthLayout 2022 month
-  putStrLn "Hello world"
 
 type Year = Integer
 
