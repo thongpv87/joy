@@ -17,7 +17,6 @@ class Functor w => Comonad w where
   extend :: (w a -> b) -> w a -> w b
   extend f = fmap f . duplicate
 
-
 -- TODO: add sized box layout
 data Layout a
   = Simple a
@@ -82,8 +81,10 @@ monthInYear _ = pure [minBound .. maxBound]
 
 stdYearLayout :: Year -> Layout Month
 stdYearLayout _ =
-  sepBy (take 85 $ repeat '-')
-  . Vert . fmap (sepBy "|" . Horiz . fmap simpleL) $ monthGrid
+  sepBy (replicate 85 '-')
+    . Vert
+    . fmap (sepBy "|" . Horiz . fmap simpleL)
+    $ monthGrid
  where
   monthGrid =
     [ [Jan, Feb, Mar]
@@ -94,13 +95,12 @@ stdYearLayout _ =
 
 stdMonthLayout :: Year -> Month -> Layout (DayOfMonth, DayOfWeek)
 stdMonthLayout year month =
-  padB "    " 7 . Vert . (dowsLabel :) . padWeek . fmap Horiz $ grid
+  padB (replicate 28 ' ') 7 . Vert . (dowsLabel :) . padWeek . fmap Horiz $ grid
  where
   padWeek (x : xs) = (padL "    " 7 x : init xs) <> [padR "    " 7 (last xs)]
   padWeek [] = []
   grid = fmap simpleL <$> weekInMonth (dayInMonth year month)
-  dowsLabel = Txt "Sun Mon Tue Wed Thu Fri Sat " 
-
+  dowsLabel = Txt "Sun Mon Tue Wed Thu Fri Sat "
 
 showMonth (Padding p) = [p]
 showMonth (Txt str) = [str]
@@ -114,13 +114,12 @@ showMonth (Horiz []) = repeat []
 showMonth (Vert ls) = concatMap showMonth ls
 
 main = do
-  -- putStrLn $ unlines $ showMonth $ fromEnum <$> stdYearLayout 2022
-  putStrLn . unlines . showMonth $ do
-    -- print $ do
-    month <- stdYearLayout 2022
-    -- stdMonthLayout 2022 month
-    -- month <- pure Jan
-    fmap fst $ stdMonthLayout 2022 month
+  forever $ do
+    putStrLn "Input year"
+    year <- readLn
+    putStrLn . unlines . showMonth $ do
+      month <- stdYearLayout year
+      fst <$> stdMonthLayout year month
 
 type Year = Integer
 
@@ -134,7 +133,7 @@ type DayOfMonth = Integer
 
 isLeapYear :: Integral a => a -> Bool
 isLeapYear year
-  | year `mod` 4 /= 0 || year `mod` 100 == 0 = False
+  | (year `mod` 4 /= 0) || (year `mod` 400 == 0) = False
   | otherwise = True
 
 -- | algorithm to calculate day of the week from: https://cs.uwaterloo.ca/~alopez-o/math-faq/node73.html
@@ -168,9 +167,9 @@ dayInMonth year month
   | month `elem` [Jan, Mar, May, Jul, Aug, Oct, Dec] = dom 31
   | month `elem` [Apr, Jun, Sep, Nov] = dom 30
   -- Feb in leap year
-  | isLeapYear year = dom 28
+  | isLeapYear year = dom 29
   -- Feb in normal year
-  | otherwise = dom 29
+  | otherwise = dom 28
  where
   firstDow = dayOfWeek year month 1
   dow = dropWhile (/= firstDow) $ concat $ repeat [minBound .. maxBound]
