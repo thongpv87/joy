@@ -62,25 +62,21 @@ library
   import:                      common-options
   other-modules:
   build-depends:                base
-                              , QuickCheck
 
 
 executable Hello
            import:              common-options
            main-is:             HelloWorld.hs
            build-depends:       base
-                              , random
                               , joy
-                              , containers
                               , QuickCheck
            default-language:    Haskell2010
 
 executable RS
            import:              common-options
            main-is:             RS.hs
-           build-depends:       random
+           build-depends:
                               , joy
-                              , containers
                               , QuickCheck
            default-language:    Haskell2010
 
@@ -88,9 +84,8 @@ executable FRP
            import:              common-options
            main-is:             frp.hs
            hs-source-dirs:      src/FRP
-           build-depends:       random
+           build-depends:
                               , joy
-                              , containers
                               , QuickCheck
            default-language:    Haskell2010
 
@@ -98,12 +93,9 @@ executable FAlgebra
            import:              common-options
            main-is:             falgebra.hs
            hs-source-dirs:      src
-           build-depends:       random
+           build-depends:
                               , joy
                               , text
-                              , deriving-compat
-                              , data-fix
-                              , recursion-schemes
                               , containers
                               , QuickCheck
            default-language:    Haskell2010
@@ -112,16 +104,9 @@ executable Life
            import:              common-options
            main-is:             life.hs
            hs-source-dirs:      src
-           build-depends:       random
+           build-depends:
                               , joy
-                              , transformers
-                              , profunctors
-                              , MemoTrie
-                              , ansi-terminal
                               , text
-                              , deriving-compat
-                              , data-fix
-                              , recursion-schemes
                               , containers
                               , QuickCheck
            default-language:    Haskell2010
@@ -130,17 +115,10 @@ executable Afterlife
            import:              common-options
            main-is:             afterlife.hs
            hs-source-dirs:      src
-           build-depends:       random
+           build-depends:
                               , joy
                               , mtl
-                              , transformers
-                              , profunctors
-                              , MemoTrie
-                              , ansi-terminal
                               , text
-                              , deriving-compat
-                              , data-fix
-                              , recursion-schemes
                               , containers
                               , QuickCheck
            default-language:    Haskell2010
@@ -149,19 +127,36 @@ executable Calendar
            import:              common-options
            main-is:             calendar.hs
            hs-source-dirs:      src
-           build-depends:       random
+           build-depends:
                               , joy
-                              , time
-                              , transformers
-                              , profunctors
-                              , ansi-terminal
                               , text
-                              , deriving-compat
-                              , data-fix
-                              , recursion-schemes
                               , containers
                               , QuickCheck
            default-language:    Haskell2010
+
+executable Calendar2
+           import:              common-options
+           main-is:             calendar2.hs
+           hs-source-dirs:      src
+           build-depends:
+                              , joy
+                              , text
+                              , containers
+                              , QuickCheck
+           default-language:    Haskell2010
+
+
+executable Json
+           import:              common-options
+           main-is:             json.hs
+           hs-source-dirs:      src
+           build-depends:
+                              , joy
+                              , text
+                              , containers
+                              , QuickCheck
+           default-language:    Haskell2010
+
 
 
 
@@ -170,18 +165,8 @@ executable TUI
            main-is:             tui.hs
            hs-source-dirs:      src/FRP
            other-modules:       Expr
-           build-depends:       random
-                              , brick >= 1.1
-                              , vty
-                              , microlens
+           build-depends:
                               , text
-                              , microlens-th
-                              , async
-                              , recursion-schemes
-                              , data-fix
-                              , mtl
-                              , deriving-compat
-                              , containers
                               , QuickCheck
            ghc-options:         -threaded
            default-language:    Haskell2010
