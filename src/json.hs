@@ -3,6 +3,7 @@
 module Main where
 
 import Control.Monad
+import Data.Maybe (fromMaybe)
 
 data Lit
     = LBool Bool
@@ -39,7 +40,7 @@ data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | D
 data DayOfWeek = Sun | Mon | Tue | Wed | Thu | Fri | Sat
     deriving (Show, Eq, Enum, Bounded)
 type DayOfMonth = Integer
-type Week = [(DayOfWeek, DayOfMonth)]
+type Week = [(DayOfMonth, DayOfWeek)]
 
 isLeapYear :: Integral a => a -> Bool
 isLeapYear year
@@ -50,34 +51,31 @@ year :: Integer -> JSON Year
 year = pure
 
 toMonth :: Year -> JSON Month
-toMonth _ = JArr (JVal <$> [minBound .. maxBound])
-
-toDayOfMonth :: Year -> Month -> JSON DayOfMonth
-toDayOfMonth year month
-    | month `elem` [1, 3, 5, 7, 8, 10, 12] = JArr (JVal <$> [1 .. 31])
-    | month `elem` [4, 6, 9, 11] = JArr (JVal <$> [1 .. 30])
-    | isLeapYear year = JArr (JVal <$> [1 .. 29])
-    | otherwise = JArr (JVal <$> [1 .. 28])
+toMonth y = JObj [(show y, JArr (JVal <$> [minBound .. maxBound]))]
 
 toWeek :: Year -> Month -> JSON Week
 toWeek year month =
-    undefined
+    JObj [(show month, JArr (JVal <$> breakIntoWeek dom))]
   where
     ndays
-        | month `elem` [1, 3, 5, 7, 8, 10, 12] = 31
-        | month `elem` [4, 6, 9, 11] = 30
+        | month `elem` [Jan, Mar, May, Jul, Aug, Oct, Dec] = 31
+        | month `elem` [Apr, Jun, Sep, Nov] = 30
         | isLeapYear year = 29
         | otherwise = 28
     firstDow = dayOfWeek year month 1
     dow = dropWhile (/= firstDow) . concat . repeat $ [minBound .. maxBound]
     dom = zip [1 .. ndays] dow
-    breakIntoWeek :: [(toDayOfMonth, toDayOfMonth)]
+    breakIntoWeek :: [(DayOfMonth, DayOfWeek)] -> [Week]
+    breakIntoWeek [] = []
+    breakIntoWeek (d : ds) =
+        let (w, ws) = break ((== Sun) . snd) ds
+         in (d : w) : breakIntoWeek ws
 
 main = do
     print $ do
-        x <- year 1995
+        x <- JArr (fmap year [2000 .. 2020])
         y <- toMonth x
-        z <- toDay x y
+        z <- toWeek x y
         pure z
 
 -- | algorithm to calculate day of the week from: https://cs.uwaterloo.ca/~alopez-o/math-faq/node73.html
