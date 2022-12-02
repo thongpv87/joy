@@ -28,13 +28,7 @@ data Layout a
 
 instance Applicative Layout where
   pure = Simple
-  (<*>) :: Layout (a -> b) -> Layout a -> Layout b
-  Simple f <*> a = fmap f a
-  Padding p <*> _ = Padding p
-  Txt s <*> _ = Txt s
-  Horiz fs <*> a = Horiz (fmap (<*> a) fs)
-  Vert fs <*> a = Vert (fmap (<*> a) fs)
-
+  (<*>) = ap
 instance Monad Layout where
   (>>=) :: Layout a -> (a -> Layout b) -> Layout b
   Simple a >>= f = f a
