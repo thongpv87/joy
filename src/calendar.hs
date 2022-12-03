@@ -29,6 +29,7 @@ data Layout a
 instance Applicative Layout where
   pure = Simple
   (<*>) = ap
+
 instance Monad Layout where
   (>>=) :: Layout a -> (a -> Layout b) -> Layout b
   Simple a >>= f = f a
@@ -73,8 +74,8 @@ padB _ _ l = l
 monthInYear :: Monad m => Year -> m [Month]
 monthInYear _ = pure [minBound .. maxBound]
 
-stdYearLayout :: Year -> Layout Month
-stdYearLayout _ =
+stdYearLayout :: Layout Month
+stdYearLayout =
   sepBy (replicate 85 '-')
     . Vert
     . fmap (sepBy "|" . Horiz . fmap simpleL)
@@ -112,7 +113,7 @@ main = do
     putStrLn "Input year"
     year <- readLn
     putStrLn . unlines . showMonth $ do
-      month <- stdYearLayout year
+      month <- stdYearLayout
       fst <$> stdMonthLayout year month
 
 type Year = Integer
