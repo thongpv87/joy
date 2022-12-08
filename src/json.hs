@@ -5,15 +5,15 @@ module Main where
 import Control.Monad
 import Data.Maybe (fromMaybe)
 
-data Lit
-    = LBool Bool
-    | LStr String
-    | LNum Integer
-    deriving (Show)
+class Functor w => Comonad w where
+    extract :: w a -> a
+    duplicate :: w a -> w (w a)
+    duplicate = extend id
+    extend :: (w a -> b) -> w a -> w b
+    extend f = fmap f . duplicate
 
 data JSON a
-    = JNull
-    | JVal a
+    = JVal a
     | JObj [(String, JSON a)]
     | JArr [JSON a]
     deriving (Show, Functor)
@@ -24,14 +24,9 @@ instance Applicative JSON where
 
 instance Monad JSON where
     (>>=) :: JSON a -> (a -> JSON b) -> JSON b
-    JNull >>= _ = JNull
     JVal a >>= f = f a
     JObj xs >>= f = JObj (fmap (>>= f) <$> xs)
     JArr xs >>= f = JArr (fmap (>>= f) xs)
-
-mkBool = JVal . LBool
-mkStr = JVal . LStr
-mkNum = JVal . LNum
 
 type Year = Integer
 data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec
@@ -47,11 +42,12 @@ isLeapYear year
     | (year `mod` 4 /= 0) || (year `mod` 400 == 0) = False
     | otherwise = True
 
-year :: Integer -> JSON Year
-year = pure
+mkYear :: Integer -> JSON Year
+mkYear = pure
 
 toMonth :: Year -> JSON Month
-toMonth y = JObj [(show y, JArr (JVal <$> [minBound .. maxBound]))]
+toMonth y =
+    JObj [(show y, JArr (JVal <$> [minBound .. maxBound]))]
 
 toWeek :: Year -> Month -> JSON Week
 toWeek year month =
@@ -73,10 +69,8 @@ toWeek year month =
 
 main = do
     print $ do
-        x <- JArr (fmap year [2000 .. 2020])
-        y <- toMonth x
-        z <- toWeek x y
-        pure z
+        month <- toMonth 2022
+        toWeek 2022 month
 
 -- | algorithm to calculate day of the week from: https://cs.uwaterloo.ca/~alopez-o/math-faq/node73.html
 dayOfWeek :: Integer -> Month -> DayOfMonth -> DayOfWeek

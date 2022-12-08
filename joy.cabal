@@ -134,9 +134,9 @@ executable Calendar
                               , QuickCheck
            default-language:    Haskell2010
 
-executable Calendar2
+executable FreeMonad
            import:              common-options
-           main-is:             calendar2.hs
+           main-is:             free-monad.hs
            hs-source-dirs:      src
            build-depends:
                               , joy

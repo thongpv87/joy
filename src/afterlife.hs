@@ -2,6 +2,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -ddump-deriv
     -dsuppress-idinfo
     -dsuppress-coercions
@@ -21,8 +22,8 @@ class Functor w => Comonad w where
   extend f = fmap f . duplicate
 
 data Store s a = Store
-  { peek :: s -> a,
-    pos :: s
+  { peek :: s -> a
+  , pos :: s
   }
 
 instance Functor (Store s) where
@@ -42,9 +43,9 @@ instance (Monoid s) => Applicative (Store s) where
 instance (Monoid s) => Monad (Store s) where
   (>>=) :: Store s a -> (a -> Store s b) -> Store s b
   Store f s >>= fm = Store h b
-    where
-      h s' = peek (fm (f s')) s'
-      b = s `mappend` pos (fm (f mempty))
+   where
+    h s' = peek (fm (f s')) s'
+    b = s `mappend` pos (fm (f mempty))
 
 instance Monoid s => MonadState s (Store s) where
   get :: Store s s
@@ -55,8 +56,26 @@ instance Monoid s => MonadState s (Store s) where
 runState :: Store s a -> s -> (a, s)
 runState (Store f _) s = (f s, s)
 
-test :: (Monad m) => m a
-test = undefined
+newtype R a = R a
+  deriving (Show, Functor)
+
+instance Applicative R where
+  pure = R
+  R f <*> R a = R (f a)
+
+instance Monad R where
+  R ma >>= f = f ma
+
+mm :: Integer -> R [Integer]
+mm _ = pure [1 .. 12]
+
+dd :: Integer -> R [Integer]
+dd _ = pure [1 .. 31]
 
 main = do
+  print $ do
+    y <- pure @R 2022
+    m <- mm y
+    mapM dd m
+
   putStrLn "Hello world"
