@@ -24,6 +24,12 @@ cradle:
     - path: "src/calendar.hs"
       component: "joy:exe:Calendar"
 
+    - path: "src/free-monad.hs"
+      component: "joy:exe:FreeMonad"
+
+    - path: "src/json.hs"
+      component: "joy:exe:Json"
+
     - path: "src/FRP/tui.hs"
       component: "joy:exe:TUI"
 

@@ -1,54 +1,87 @@
 module Main where
 
-import Control.Monad
-import Data.List (scanl', unfoldr)
+import Control.Monad (ap, join)
 
-type Loc = (Double, Double)
-newtype Image a = Image (Loc -> a)
-type Size = (Integer, Integer)
+data Free f a = Pure a | Free (f (Free f a))
 
-type Month = Integer
-type Year = Integer
-type Day = Integer
-type Week = [Maybe Day]
+instance Functor f => Functor (Free f) where
+    fmap f (Pure a) = Pure (f a)
+    fmap f (Free g) = Free (fmap f <$> g)
 
-class Functor w => Comonad w where
-    extract :: w a -> a
-    duplicate :: w a -> w (w a)
-    duplicate = extend id
-    extend :: (w a -> b) -> w a -> w b
-    extend f = fmap f . duplicate
+instance Functor f => Applicative (Free f) where
+    pure = Pure
+    (<*>) = ap
 
-instance Comonad ((,) e) where
-    extract = snd
-    duplicate (e, a) = (e, (e, a))
+instance Functor f => Monad (Free f) where
+    Pure a >>= f = f a
+    Free f >>= g = Free (fmap (>>= g) f)
 
-newtype Fix f = Fix {unFix :: f (Fix f)}
+liftF :: Functor f => f a -> Free f a
+liftF f = Free (Pure <$> f)
 
-cata :: Functor f => (f a -> a) -> Fix f -> a
-cata alg = alg . fmap (cata alg) . unFix
+-- foldFree :: Functor f => (a -> b) -> (f b -> b) -> Free f a -> b
 
-ana :: Functor f => (a -> f a) -> a -> Fix f
-ana alg = Fix . fmap (ana alg) . alg
+foldFree :: (Monad m, Functor f) => (forall x. f x -> m x) -> Free f a -> m a
+foldFree _ (Pure a) = pure a
+foldFree f (Free g) = join $ f (fmap (foldFree f) g)
 
-toL = cata (uncurry (:))
+---------------- Writer monad------------------
+newtype WriterF w a = WriterF {runWriterF :: (a, w)}
+    deriving (Functor)
 
--- findNb :: Integer -> Integer
-findNb vol =
-    head . dropWhile ((> 0) . snd) $ iterate (\(n, v) -> (n + 1, v - n ^ 3)) (0, vol)
+type Writer f = Free (WriterF f)
 
--- toL $ ana (\(n, v) -> if v <= n ^ 3 then (n, (n, v)) else (n + 1, (n + 1, v - n ^ 3))) (0, vol)
+runWriter :: (Monoid w) => Writer w a -> (a, w)
+runWriter (Pure a) = (a, mempty)
+runWriter (Free f) =
+    let (fa, w) = runWriterF f
+        (fa', w') = runWriter fa
+     in (fa', w <> w')
 
-findNb' x = let l = takeWhile (<= x) $ scanl' (+) 0 $ fmap (^ 3) [1 ..] in if last l /= x then -1 else length l
+writerF :: (a, w) -> WriterF w a
+writerF = WriterF
+tellF :: w -> WriterF w ()
+tellF w = WriterF ((), w)
+
+writer = liftF . writerF
+tell = liftF . tellF
+
+testWriterM = do
+    tell "Hello"
+    tell "World"
+    pure 5
+
+---------------- State monad ------------------
+newtype StateF s a = StateF {runStateF :: s -> (a, s)}
+    deriving (Functor)
+
+getF :: StateF s s
+getF = StateF (\s -> (s, s))
+putF :: s -> StateF s ()
+putF s = StateF (const ((), s))
+modifyF :: (s -> s) -> StateF s ()
+modifyF f = StateF (\s -> ((), f s))
+
+type State s = Free (StateF s)
+get = liftF getF
+put = liftF . putF
+modify = liftF . modifyF
+
+testStateM = do
+    x <- get
+    put (x + 1)
+    pure (x + 10)
+
+ppStateM :: (Show a, Show s) => State s a -> s -> String
+ppStateM (Pure a) s = show (a, s)
+ppStateM (Free f) s =
+    let (a, s') = runStateF f s
+     in concat [show s, "->", show s', "\n", ppStateM a s']
+
+toState :: Monoid w => WriterF w a -> State w a
+toState (WriterF (a, w)) = do
+    modify (<> w)
+    pure a
 
 main = do
-    putStrLn "Hello world"
-    print $ findNb' 1071225
-    print $ do
-        x <- [1 .. 5]
-        y <- [1 .. x]
-        -- z <- [1 .. x]
-        pure (x, y)
-
--- guard (y ^ 2 + z ^ 2 == x ^ 2)
--- pure (x, y, z)
+    putStrLn $ ppStateM (foldFree toState testWriterM) "Init "
