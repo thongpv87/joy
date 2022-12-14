@@ -86,6 +86,7 @@ executable FRP
            hs-source-dirs:      src/FRP
            build-depends:
                               , joy
+                              , data-fix
                               , QuickCheck
            default-language:    Haskell2010
 
@@ -96,6 +97,9 @@ executable FAlgebra
            build-depends:
                               , joy
                               , text
+                              , data-fix
+                              , deriving-compat
+                              , recursion-schemes
                               , containers
                               , QuickCheck
            default-language:    Haskell2010
@@ -107,6 +111,8 @@ executable Life
            build-depends:
                               , joy
                               , text
+                              , MemoTrie
+                              , ansi-terminal
                               , containers
                               , QuickCheck
            default-language:    Haskell2010
@@ -168,6 +174,13 @@ executable TUI
            other-modules:       Expr
            build-depends:
                               , text
+                              , data-fix
+                              , recursion-schemes
+                              , deriving-compat
+                              , microlens
+                              , microlens-th
+                              , vty
+                              , brick
                               , QuickCheck
            ghc-options:         -threaded
            default-language:    Haskell2010

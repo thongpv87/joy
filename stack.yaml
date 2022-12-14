@@ -1,6 +1,7 @@
 resolver: lts-18.28
 packages:
   - .
+  - src/free
 
 ghc-options:
   '$everything': -haddock
