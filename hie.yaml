@@ -1,37 +1,43 @@
 cradle:
   cabal:
-    - path: "./"
+    - path: "././"
       component: "lib:joy"
 
-    - path: "./HelloWorld.hs"
+    - path: "././HelloWorld.hs"
       component: "joy:exe:Hello"
 
-    - path: "./RS.hs"
+    - path: "././RS.hs"
       component: "joy:exe:RS"
 
-    - path: "src/FRP/frp.hs"
+    - path: "./src/FRP/frp.hs"
       component: "joy:exe:FRP"
 
-    - path: "src/falgebra.hs"
+    - path: "./src/falgebra.hs"
       component: "joy:exe:FAlgebra"
 
-    - path: "src/life.hs"
+    - path: "./src/life.hs"
       component: "joy:exe:Life"
 
-    - path: "src/afterlife.hs"
+    - path: "./src/afterlife.hs"
       component: "joy:exe:Afterlife"
 
-    - path: "src/calendar.hs"
+    - path: "./src/calendar.hs"
       component: "joy:exe:Calendar"
 
-    - path: "src/free-monad.hs"
+    - path: "./src/free-monad.hs"
       component: "joy:exe:FreeMonad"
 
-    - path: "src/json.hs"
+    - path: "./src/json.hs"
       component: "joy:exe:Json"
 
-    - path: "src/FRP/tui.hs"
+    - path: "./src/FRP/tui.hs"
       component: "joy:exe:TUI"
 
-    - path: "src/FRP/Expr.hs"
+    - path: "./src/FRP/Expr.hs"
       component: "joy:exe:TUI"
+
+    - path: "src/free/./"
+      component: "lib:refree"
+
+    - path: "src/free/Tests/Main.hs"
+      component: "refree:exe:FreeMain"
