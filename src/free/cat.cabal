@@ -19,11 +19,18 @@ common common-options
 library
     import: common-options
     build-depends: base
+                   , constraints
 
-    exposed-modules: Monad.Free
+    exposed-modules: Cat.Free
+                     Cat.Category
+                     Cat.Adjunction
+                     Cat.Misc
+                     Cat.NaturalTransform
+
+                     Types.Types
 
 executable FreeMain
            import: common-options
            hs-source-dirs: Tests
            main-is: Main.hs
-           build-depends: refree
+           build-depends: cat

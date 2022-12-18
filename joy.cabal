@@ -69,6 +69,7 @@ executable Hello
            main-is:             HelloWorld.hs
            build-depends:       base
                               , joy
+                              , constraints
                               , QuickCheck
            default-language:    Haskell2010
 

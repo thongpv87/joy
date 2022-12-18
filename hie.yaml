@@ -1,7 +1,7 @@
 cradle:
-  cabal:
+  stack:
     - path: "././"
-      component: "lib:joy"
+      component: "joy:lib"
 
     - path: "././HelloWorld.hs"
       component: "joy:exe:Hello"
@@ -37,7 +37,7 @@ cradle:
       component: "joy:exe:TUI"
 
     - path: "src/free/./"
-      component: "lib:refree"
+      component: "cat:lib"
 
     - path: "src/free/Tests/Main.hs"
-      component: "refree:exe:FreeMain"
+      component: "cat:exe:FreeMain"

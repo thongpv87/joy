@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
@@ -8,6 +6,7 @@
 
 module Cat.Free where
 
+import Cat.NaturalTransform ((~>))
 import Control.Monad (ap)
 import Data.Functor.Identity (Identity (..))
 
@@ -39,11 +38,6 @@ liftF f = Free (Pure <$> f)
 monad :: Monad m => Free m ~> m
 monad (Pure a) = pure a
 monad (Free ma) = ma >>= monad
-
--- | @f ~> g@ is a natural transformation from @f@ to @g@. A natrual transformation @alpha@ need to obey this law:
---
--- [Naturality condition] @alpha . 'fmap' = 'fmap' . alpha@
-type (~>) f g = forall x. f x -> g x
 
 -- | Map a natrual transformation @f~>g@ to a natural transformation between @Free f ~> Free g@.
 -- We can see that @Free@ is functor in category of functors, in which object are funtors, and
