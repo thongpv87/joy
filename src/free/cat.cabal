@@ -24,10 +24,9 @@ library
     exposed-modules: Cat.Free
                      Cat.Category
                      Cat.Adjunction
-                     Cat.Misc
                      Cat.NaturalTransform
 
-                     Types.Types
+                     Types.Misc
 
 executable FreeMain
            import: common-options

@@ -27,10 +27,6 @@ type (:=>) = (->)
 {----------------------------------------------------
             Other
 ----------------------------------------------------}
-type Unop a = a -> a
-type Binop a = a -> Unop a
-type Ternop a = a -> Binop a
-
 infixl 1 <~
 infixr 1 ~>
 
@@ -41,15 +37,6 @@ infixr 1 ~>
 -- | Add post- and pre-processing
 (<~) :: forall a b a' b'. (b -> b') -> (a' -> a) -> ((a -> b) -> (a' -> b'))
 (h <~ f) g = h . g . f
-
-class Yes0
-instance Yes0
-
-class Yes1 a
-instance Yes1 a
-
-class Yes2 a b
-instance Yes2 a b
 
 {----------------------------------------------------
             Constraint shorthands
