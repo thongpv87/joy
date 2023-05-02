@@ -6,9 +6,15 @@
 
 module Cat.Free where
 
-import Cat.NaturalTransform ((~>))
-import Control.Monad (ap)
+-- import Cat.NaturalTransform ((~>))
 import Data.Functor.Identity (Identity (..))
+
+infixr 0 ~>
+
+-- | @f ~> g@ is a natural transformation from @f@ to @g@. A natrual transformation @alpha@ need to obey this law:
+--
+-- [Naturality condition] @alpha . 'fmap' = 'fmap' . alpha@
+type (~>) f g = forall x. f x -> g x
 
 -- | 'Free' is a functor categorically, mapping 'Functor's to 'Monad', and maps
 -- morphism between functor (natual transformation) into morphism of monad (via `foldFree`)

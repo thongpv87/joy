@@ -12,7 +12,7 @@
 
 module Cat.Category where
 
-import Data.Either (Either (..))
+import Cat.Prelude
 import qualified GHC.Base as B (id, (.))
 import Types.Misc
 
@@ -84,6 +84,7 @@ class (Cartesian k) => CartesianClosed k where
   apply = uncurry id
   curry :: forall a b c. ((a :* b)) `k` c -> a `k` (b :=> c)
   uncurry :: forall a b c. a `k` (b :=> c) -> (a :* b) `k` c
+  uncurry f = apply . first f
 
 {----------------------------------------------------------
             Category of function
