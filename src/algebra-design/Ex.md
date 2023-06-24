@@ -75,3 +75,28 @@ Exercise Recreate figure 2.15, using beside, cw and ccw.
 
 ccw (beside (ccw sandy) (ccw haskell))
 ```
+
+
+
+# chapter 2.4
+
+## api
+```
+data Tile a
+instance Functor Tile
+
+rasterize :: Int -> Int -> Tile a -> [[a]]
+
+cw :: Tile a -> Tile a
+ccw :: Tile a -> Tile a
+beside :: Tile a -> Tile a -> Tile a
+above :: Tile a -> Tile a -> Tile a
+flipH :: Tile a -> Tile a
+flipV :: Tile a -> Tile a
+quad :: Tile a -> Tile a -> Tile a -> Tile a -> Tile a
+swirl :: Tile a -> Tile a
+
+color :: Double -> Double -> Double -> Double -> Tile Color
+empty :: Tile Color
+behind :: Tile Color -> Tile Color -> Tile Color
+```
