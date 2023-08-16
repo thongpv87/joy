@@ -41,6 +41,7 @@
 
 
 # Idea
+
 ```haskell
 data Addr
 
@@ -48,6 +49,15 @@ data Endpoint
   = Single Addr
   | Both Endpoint Endpoint
   | Gateway Endpoint Endpoint
+
+data Message
+  = Message User Timestamp Text
+  | ReplyTo Message Message
+
+data Thread
+  = Creator User
+  | Content Text
+  | Comment Timestamp User Thread
 
 recv :: Message -> Inbox -> Inbox
 send :: Message -> Outbox -> Outbox

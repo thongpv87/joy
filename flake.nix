@@ -1,42 +1,60 @@
 {
-  description = "A very basic flake";
+  description = "my project description";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.flake-utils.url = "github:numtide/flake-utils";
 
-  inputs= {
-  	haskellNix.url = "github:input-output-hk/haskell.nix";
-  	nixpkgs.follows = "haskellNix/nixpkgs-unstable";
-  	flake-utils.url = "github:numtide/flake-utils";
-  };
-  outputs = { self, nixpkgs, flake-utils, haskellNix }:
-    flake-utils.lib.eachSystem [ "x86_64-darwin" "x86_64-linux" ] (system:
-    let
-      overlays = [ haskellNix.overlay
-        (final: prev: {
-          # This overlay adds our project to pkgs
-          hsProject =
-            final.haskell-nix.stackProject' {
-              name = "joy";
-              src = ./.;
-              shell = {
-                tools = {
-                  cabal = {};
-                  haskell-language-server = {};
-                };
-                buildInputs = with pkgs;
-                  [ stack protobuf haskellPackages.implicit-hie pkg-config zlib git haskellPackages.hls-eval-plugin
-                    #SDL2 xorg.libXi xorg.libXrandr xorg.libXxf86vm xorg.libXcursor xorg.libXinerama xorg.libXext
-                  ];
-              };
-            };
-        })
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+  }:
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+
+      hPkgs =
+        pkgs.haskell.packages."ghc925"; # need to match Stackage LTS version from stack.yaml resolver
+
+      myDevTools = [
+        hPkgs.ghc # GHC compiler in the desired version (will be available on PATH)
+        hPkgs.ghcid # Continuous terminal Haskell compile checker
+        hPkgs.ormolu # Haskell formatter
+        hPkgs.hlint # Haskell codestyle checker
+        hPkgs.hoogle # Lookup Haskell documentation
+        hPkgs.haskell-language-server # LSP server for editor
+        hPkgs.implicit-hie # auto generate LSP hie.yaml file from cabal
+        hPkgs.retrie # Haskell refactoring tool
+        # hPkgs.cabal-install
+        stack-wrapped
+        pkgs.zlib # External C library needed by some Haskell packages
+        pkgs.pkgconfig
       ];
-      pkgs = import nixpkgs {
-        inherit system overlays;
-        inherit (haskellNix) config;
+
+      # Wrap Stack to work with our Nix integration. We don't want to modify
+      # stack.yaml so non-Nix users don't notice anything.
+      # - no-nix: We don't want Stack's way of integrating Nix.
+      # --system-ghc    # Use the existing GHC on PATH (will come from this Nix file)
+      # --no-install-ghc  # Don't try to install GHC if no matching GHC found on PATH
+      stack-wrapped = pkgs.symlinkJoin {
+        name = "stack"; # will be available as the usual `stack` in terminal
+        paths = [pkgs.stack];
+        buildInputs = [pkgs.makeWrapper];
+        postBuild = ''
+          wrapProgram $out/bin/stack \
+            --add-flags "\
+              --no-nix \
+              --system-ghc \
+              --no-install-ghc \
+            "
+        '';
       };
-      flake = pkgs.hsProject.flake {};
-    in flake // {
-      # Built by `nix build .`
-      defaultPackage = flake.packages."joy:exe:TUI";
-    }
-    );
+    in {
+      devShells.default = pkgs.mkShell {
+        buildInputs = myDevTools;
+
+        # Make external Nix c libraries like zlib known to GHC, like
+        # pkgs.haskell.lib.buildStackProject does
+        # https://github.com/NixOS/nixpkgs/blob/d64780ea0e22b5f61cd6012a456869c702a72f20/pkgs/development/haskell-modules/generic-stack-builder.nix#L38
+        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath myDevTools;
+      };
+    });
 }

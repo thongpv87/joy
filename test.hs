@@ -2,6 +2,7 @@
 
 module Main where
 
+import Data.List (genericLength, genericTake, sort)
 import Prelude hiding (Maybe (..))
 
 data Tree a
@@ -37,6 +38,15 @@ ff (Cons a _) = Node a Leaf Leaf
 ff' :: List a -> Tree a
 ff' (Cons a _) = Node a (Node a Leaf Leaf) Leaf
 
+reverseNumber :: Integer -> [Integer]
+reverseNumber seed =
+  (seed * (10 ^ l) + rseed) : fmap (\x -> (seed * 10 + x) * (10 ^ l) + rseed) [0 .. 9]
+ where
+  l = genericLength (show seed)
+  rseed = read $ reverse (show seed)
+
 main = do
-  print $ alphabet f
-  print $ alphabet2 f
+  print $ (sort $ genericTake (1 * 1000) $ ([0 .. 9] ++ concat (fmap reverseNumber [1 ..])))
+
+-- print $ alphabet f
+-- print $ alphabet2 f
