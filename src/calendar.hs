@@ -88,6 +88,17 @@ stdYearLayout =
     , [Oct, Nov, Dec]
     ]
 
+yearLayout :: Layout Month
+yearLayout = Vert . fmap (Horiz . fmap simpleL) $ monthGrid
+  where
+    monthGrid =
+      [ [Jan, Feb, Mar]
+      , [Apr, May, Jun]
+      , [Jul, Aug, Sep]
+      , [Oct, Nov, Dec]
+      ]
+
+
 stdMonthLayout :: Year -> Month -> Layout (DayOfMonth, DayOfWeek)
 stdMonthLayout year month =
   padB (replicate 28 ' ') 7 . Vert . (dowsLabel :) . padWeek . fmap Horiz $ grid
@@ -109,6 +120,9 @@ showMonth (Horiz []) = repeat []
 showMonth (Vert ls) = concatMap showMonth ls
 
 main = do
+  print $ do
+   yearLayout
+
   forever $ do
     putStrLn "Input year"
     year <- readLn

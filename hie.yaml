@@ -15,6 +15,9 @@ cradle:
     - path: "./src/falgebra.hs"
       component: "joy:exe:FAlgebra"
 
+    - path: "./src/calc.hs"
+      component: "joy:exe:Calc"
+
     - path: "./src/life.hs"
       component: "joy:exe:Life"
 
@@ -35,9 +38,6 @@ cradle:
 
     - path: "./src/FRP/Expr.hs"
       component: "joy:exe:TUI"
-
-    - path: "./src/pretty-printer/Main.hs"
-      component: "joy:exe:PrettyPrinter"
 
     - path: "src/free/./"
       component: "cat:lib"

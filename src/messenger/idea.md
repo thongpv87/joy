@@ -77,3 +77,4 @@ send :: Message -> Outbox -> Outbox
   - This could be similar to IP addressing
 - User authentication?
   - PW authentication
+

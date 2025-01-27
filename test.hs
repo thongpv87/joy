@@ -48,5 +48,6 @@ reverseNumber seed =
 main = do
   print $ (sort $ genericTake (1 * 1000) $ ([0 .. 9] ++ concat (fmap reverseNumber [1 ..])))
 
+
 -- print $ alphabet f
 -- print $ alphabet2 f
